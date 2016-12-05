@@ -4,8 +4,12 @@
 
 
 int main(int argc, char** argv) {
-  for (int i = 0; i < argc; i++) {
-    const char* str = sstring_alloc(argv[i], strlen(argv[i]));
-    printf("%s: %d\n", str, sstring_len(str));
-  }
+  char* testa = "foo bar";
+  char* testb = "bar baz";
+  const char* test_eqa = sstring_alloc("foo", strlen("foo"));
+  const char* test_eqb = sstring_alloc("bar", strlen("bar"));
+  const char* test_eqc = sstring_alloc("foo", strlen("foo"));
+  printf("A == B: %d\n", sstring_cmp(test_eqa, test_eqb));
+  printf("B == C: %d\n", sstring_cmp(test_eqb, test_eqc));
+  printf("A == C: %d\n", sstring_cmp(test_eqa, test_eqc));
 }
