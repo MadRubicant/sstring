@@ -12,7 +12,7 @@ const char* sstring_alloc(const char* string, uint32_t len) {
   // We're storing the size of the string in the 4 bytes before it
   int* size_loc = buf;
   char* str_loc = buf;
-  str_loc += sizeof(int);
+  str_loc += sizeof(uint32_t);
   
   *size_loc = len;
   strncpy(str_loc, string, len);
@@ -20,19 +20,26 @@ const char* sstring_alloc(const char* string, uint32_t len) {
   return str_loc;
 }
 
+const char* sstring_create(const char* bytestring) {
+  if (bytestring) {
+    return sstring_alloc(bytestring, strlen(bytestring));
+  }
+  return NULL;
+}
+
 const char* sstring_cpy(const char* sstring) {
   return sstring_alloc(sstring, sstring_len(sstring));
 }
 
 void sstring_free(const char* sstring) {
-  char* base_addr = (char*)sstring - 4;
+  char* base_addr = (char*)sstring - sizeof(uint32_t);
   free(base_addr);
 }
 
 uint32_t sstring_len(const char* sstring) {
   if (!sstring)
     return 0;
-  return *(((uint32_t*)sstring) - 1);
+  return *((uint32_t*)(sstring - sizeof(uint32_t)));
 }
 
 const char* sstring_substr(const char* sstring, uint32_t start, uint32_t end) {
