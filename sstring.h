@@ -30,7 +30,7 @@ const char* sstring_alloc(const char* string, uint32_t len) {
 }
 
 // You'd better not pass this function a string literal
-// Do it and I'll cut you
+// If you do have fun with your memory being scribbled over
 void sstring_free(const char* sstring) {
   char* base_addr = (char*)sstring - 4;
   free(base_addr);
