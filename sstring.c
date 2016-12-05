@@ -1,5 +1,5 @@
 #include "sstring.h"
-
+#include "stretchy_buffer.h"
 
 const char* sstring_alloc(const char* string, uint32_t len) {
   // Alloc 4 bytes more than we need
@@ -89,4 +89,25 @@ const char* sstring_cat(const char* left, const char* right) {
   }
   final[lena + lenb] = '\0';
   return final;
+}
+
+const char** sstring_split(const char* sstring, char splitchr) {
+  uint32_t start = 0;
+  uint32_t len = sstring_len(sstring);
+  const char** split_arr = NULL;
+  
+  for (int i = 0; i < len; i++) {
+    if (sstring[i] == splitchr) {
+      sb_push(split_arr, sstring_substr(sstring, start, start + i));
+      start += i;
+    }
+  }
+  int num_split = sb_count(split_arr) + 1;
+  const char** ret_arr = malloc(num_split * sizeof(char*));
+  for (int i = 0; i < num_split - 1; i++) {
+    ret_arr[i] = split_arr[i];
+  }
+  ret_arr[num_split - 1] = NULL;
+  sb_free(split_arr);
+  return ret_arr;
 }
