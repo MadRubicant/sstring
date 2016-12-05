@@ -10,7 +10,7 @@
 #define max(a, b) (a > b ? a : b)
 #define min(a, b) (a < b ? a : b)
 
-const char* sstring_alloc(const char* string_lit, uint32_t len) {
+const char* sstring_alloc(const char* string, uint32_t len) {
   // Alloc 4 bytes more than we need
   void* buf = malloc(len + 1 + sizeof(int32_t));
   // If we're in an OOM condition, assert false
@@ -24,7 +24,7 @@ const char* sstring_alloc(const char* string_lit, uint32_t len) {
   str_loc += sizeof(int);
   
   *size_loc = len;
-  strncpy(str_loc, string_lit, len);
+  strncpy(str_loc, string, len);
   str_loc[len] = '\0';
   return str_loc;
 }
@@ -77,6 +77,19 @@ int sstring_eq(const char* a, const char* b) {
       return 0;
   }
   return 1;
+}
+
+const char* sstring_cat(const char* left, const char* right) {
+  uint32_t lena = sstring_len(left);
+  uint32_t lenb = sstring_len(right);
+  
+  char* final = (char*)sstring_alloc(left, lena + lenb);
+  for (int i = 0; i < lenb; i++) {
+    int strpos = i + lena;
+    final[strpos] = right[i];
+  }
+  final[lena + lenb] = '\0';
+  return final;
 }
   
 #endif
