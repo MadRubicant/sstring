@@ -10,7 +10,7 @@
 #define max(a, b) (a > b ? a : b)
 #define min(a, b) (a < b ? a : b)
 
-static const char* sstring_alloc(const char* string, uint32_t len);
+static const char* sstring_alloc(const char* string, uint32_t len, uint32_t bufsize);
 const char* sstring_create(const char* bytestring);
 const char* sstring_cpy(const char* sstring);
 // You'd better not pass this function a string literal
@@ -22,7 +22,12 @@ const char* sstring_substr(const char* sstring, uint32_t start, uint32_t end);
 int sstring_cmp(const char* a, const char* b); 
 // Compares to sstrings for equality
 int sstring_eq(const char* a, const char* b);
-const char* sstring_cat(const char* left, const char* right); 
+const char* sstring_cat(const char* left, const char* right);
+
+const char* sstring_insert(const char* sstring, int pos, const char* insert);
 // Returns a NULL terminated array of sstrings
-const char** sstring_split(const char* sstring, char splitchr);
+const char** sstring_split(const char* sstring, char splitchr, int* numsplit);
+
+
+//inline const char* sstring_d_cat(const char* left, const char* right);
 #endif
