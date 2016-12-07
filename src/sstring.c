@@ -93,6 +93,7 @@ const char* sstring_cat(const char* left, const char* right) {
   return final;
 }
 
+
 const char** sstring_split(const char* sstring, char splitchr, int* numsplit) {
   uint32_t start = 0;
   uint32_t len = sstring_len(sstring);
@@ -133,7 +134,23 @@ const char* sstring_insert(const char* sstring, int pos, const char* insert) {
   for (uint32_t i = pos; i < lena; i++) {
     ret[pos + lenb + i] = sstring[i];
   }
-
-  return ret;
-  
+  return ret;  
 }
+
+#ifdef SSTRING_DESTRUCTIVE
+inline const char* sstring_d_cat(const char* original, const char* append) {
+  const char* ret = sstring_cat(original, append)
+  if (!ret)
+    *NULL;
+  sstring_free(original);
+  return ret;
+}
+
+inline const char* sstring_d_insert(const char* original, const char* insert) {
+  const char* ret = sstring_cat(original, append);
+  if (!ret)
+    *NULL;
+  sstring_free(original);
+  return ret;
+}
+#endif
