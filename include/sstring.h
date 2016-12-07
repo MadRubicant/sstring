@@ -9,7 +9,7 @@
 #define max(a, b) (a > b ? a : b)
 #define min(a, b) (a < b ? a : b)
 
-static const char* sstring_alloc(const char* string, uint32_t len, uint32_t bufsize);
+//static const char* sstring_alloc(const char* string, uint32_t len, uint32_t bufsize);
 const char* sstring_create(const char* bytestring);
 const char* sstring_cpy(const char* sstring);
 // You'd better not pass this function a string literal

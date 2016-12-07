@@ -1,7 +1,8 @@
+#include <stdio.h>
 #include "sstring.h"
 #include "stretchy_buffer.h"
 
-const char* sstring_alloc(const char* string, uint32_t len, uint32_t bufsize) {
+static const char* sstring_alloc(const char* string, uint32_t len, uint32_t bufsize) {
   // Alloc 4 bytes more than we need
   void* buf = malloc(bufsize + 1 + sizeof(int32_t));
   // If we're in an OOM condition, assert false
@@ -99,17 +100,20 @@ const char** sstring_split(const char* sstring, char splitchr, int* numsplit) {
   
   for (int i = 0; i < len; i++) {
     if (sstring[i] == splitchr) {
-      sb_push(split_arr, sstring_substr(sstring, start, start + i));
-      start += i;
+      sb_push(split_arr, sstring_substr(sstring, start, i));
+      i++;
+      start = i;
     }
   }
+  sb_push(split_arr, sstring_substr(sstring, start, len));
   *numsplit = sb_count(split_arr);
   
   const char** ret_arr = malloc(*numsplit * sizeof(char*));
-  for (int i = 0; i < *numsplit - 1; i++) {
+  for (int i = 0; i < *numsplit; i++) {
     ret_arr[i] = split_arr[i];
   }
   sb_free(split_arr);
+  
   return ret_arr;
 }
 
