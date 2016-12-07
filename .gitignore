@@ -1,12 +1,9 @@
-# Ignore all files without extensions, to keep out binaries
-*
-!*.*
-
 # Emacs files #
 *~
 *.el
 #*#
 
 # object files
+bin/
 *.a
 *.o

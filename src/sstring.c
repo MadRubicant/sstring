@@ -7,7 +7,8 @@ const char* sstring_alloc(const char* string, uint32_t len, uint32_t bufsize) {
   // If we're in an OOM condition, assert false
   if (buf == NULL)
     assert(0);
-  
+  if (len > bufsize)
+    assert(0);
   
   // We're storing the size of the string in the 4 bytes before it
   int* size_loc = buf;
@@ -61,13 +62,13 @@ int sstring_cmp(const char* a, const char* b) {
     if (diff)
       return diff;
   }
-
   return 0;
-  
 }
 
 // Compares to sstrings for equality
 int sstring_eq(const char* a, const char* b) {
+  if (!a || !b)
+    return 0;
   uint32_t lena = sstring_len(a);
   uint32_t lenb = sstring_len(b);
   for (int i = 0; i < min(lena, lenb); i++) {

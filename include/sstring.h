@@ -5,7 +5,6 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
-#include <math.h>
 
 #define max(a, b) (a > b ? a : b)
 #define min(a, b) (a < b ? a : b)
@@ -28,6 +27,9 @@ const char* sstring_insert(const char* sstring, int pos, const char* insert);
 // Returns a NULL terminated array of sstrings
 const char** sstring_split(const char* sstring, char splitchr, int* numsplit);
 
-
+#ifdef SSTRING_DESTRUCTIVE
+const char* sstring_d_cat(const char* original, const char* append);
+const char* sstring_d_insert(const char* original, const char* insert);
+#endif
 //inline const char* sstring_d_cat(const char* left, const char* right);
 #endif
