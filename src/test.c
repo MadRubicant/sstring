@@ -2,7 +2,6 @@
 
 #include "sstring.h"
 
-
 int main(int argc, char** argv) {
   const char* testsplit = sstring_create("foo.bar.baz");
   int numsplit;

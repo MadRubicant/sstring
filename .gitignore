@@ -7,3 +7,9 @@
 bin/
 *.a
 *.o
+
+# generated project files
+Makefile
+CMakeFiles/*
+*.cmake
+CMakeCache.txt

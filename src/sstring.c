@@ -33,9 +33,12 @@ const char* sstring_cpy(const char* sstring) {
   return sstring_alloc(sstring, sstring_len(sstring), sstring_len(sstring));
 }
 
+
 void sstring_free(const char* sstring) {
-  char* base_addr = (char*)sstring - sizeof(uint32_t);
-  free(base_addr);
+  if (sstring) {
+    char* base_addr = (char*)sstring - sizeof(uint32_t);
+    free(base_addr);
+  }
 }
 
 uint32_t sstring_len(const char* sstring) {
@@ -80,7 +83,7 @@ int sstring_eq(const char* a, const char* b) {
   return 1;
 }
 
-const char* sstring_cat(const char* left, const char* right) {
+const char* sstring_append(const char* left, const char* right) {
   uint32_t lena = sstring_len(left);
   uint32_t lenb = sstring_len(right);
   
@@ -93,6 +96,17 @@ const char* sstring_cat(const char* left, const char* right) {
   return final;
 }
 
+const char* sstring_cat(const char* orig, const char* strlit) {
+  uint32_t lenorig = sstring_len(orig);
+  int lenlit = strlen(strlit);
+
+  char* final = (char*)sstring_alloc(orig, lenorig, lenorig + lenlit);
+  for (int i = 0; i < lenlit; i++) {
+    final[i + lenorig] = strlit[i];
+  }
+
+  return final;
+}
 
 const char** sstring_split(const char* sstring, char splitchr, int* numsplit) {
   uint32_t start = 0;
@@ -128,7 +142,7 @@ const char* sstring_insert(const char* sstring, int pos, const char* insert) {
   for (uint32_t i = 0; i < pos; i++) {
     ret[i] = sstring[i];
   }
-  for (uint32_t i = pos; i < lenb; i++) {
+  for (uint32_t i = 0; i < lenb; i++) {
     ret[pos + i] = insert[i];
   }
   for (uint32_t i = pos; i < lena; i++) {
@@ -137,11 +151,31 @@ const char* sstring_insert(const char* sstring, int pos, const char* insert) {
   return ret;  
 }
 
+const char* sstring_litinsert(const char* sstring, int pos, const char* insert) {
+  uint32_t lenorig = sstring_len(sstring);
+  int litlen = strlen(insert);
+  if (pos < lenorig)
+    return NULL;
+  char* final = (char*)sstring_alloc("", 0, lenorig + litlen);
+  uint32_t i = 0;
+  for (i = 0; i < pos; i ++) {
+    final[i] = sstring[i];
+  }
+  for (i = 0; i < litlen; i++) {
+    final[pos + i] = insert[i];
+  }
+  for (i = pos; i < lenorig; i++) {
+    final[pos + litlen + i] = sstring[i];
+  }
+  return final;
+}
+
+
 #ifdef SSTRING_DESTRUCTIVE
-inline const char* sstring_d_cat(const char* original, const char* append) {
+inline const char* sstring_d_append(const char* original, const char* append) {
   const char* ret = sstring_cat(original, append)
   if (!ret)
-    *NULL;
+    abort();
   sstring_free(original);
   return ret;
 }
@@ -149,7 +183,7 @@ inline const char* sstring_d_cat(const char* original, const char* append) {
 inline const char* sstring_d_insert(const char* original, const char* insert) {
   const char* ret = sstring_cat(original, append);
   if (!ret)
-    *NULL;
+    abort()
   sstring_free(original);
   return ret;
 }
