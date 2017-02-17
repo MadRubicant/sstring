@@ -1,14 +1,14 @@
 // Method of using the preprocessor for generics taken from https://stackoverflow.com/questions/16522341/pseudo-generics-in-c
 
+#include "generic_macros.h"
 // BST_COMPARE returns negative if x < y, 0 if equal, positive if x > y
-#define TOKENPASTE(x, y) x ## y
-#define bst_node(T) TOKENPASTE(__bst_node_, T)
-#define bst_insert(T) TOKENPASTE(__bst_insert_, T)
-#define bst_contains(T) TOKENPASTE(__bst_contains_, T)
-#define bst_delete(T) TOKENPASTE(__bst_remove_, T)
-#define bst_free(T) TOKENPASTE(__bst_free_, T)
-#define bst_predecessor(T) TOKENPASTE(__bst_predecessor, T)
-#define bst_successor(T) TOKENPASTE(__bst_successor, T)
+#define bst_node(T) _TOKENPASTE(_bst_node_, T)
+#define bst_insert(T) _TOKENPASTE(_bst_insert_, T)
+#define bst_contains(T) _TOKENPASTE(_bst_contains_, T)
+#define bst_delete(T) _TOKENPASTE(_bst_remove_, T)
+#define bst_free(T) _TOKENPASTE(_bst_free_, T)
+#define bst_predecessor(T) _TOKENPASTE(_bst_predecessor, T)
+#define bst_successor(T) _TOKENPASTE(_bst_successor, T)
 
 #ifndef BST_COMPARE
 #define BST_COMPARE(x, y) (x - y)
@@ -18,6 +18,13 @@
 #include <stdlib.h>
 #include "stdint.h"
 
+typedef struct bst_node(BST_TYPE) bst_node(BST_TYPE);
+bst_node(BST_TYPE)* bst_insert(BST_TYPE)(bst_node(BST_TYPE)* root, BST_TYPE data);
+int bst_contains(BST_TYPE)(bst_node(BST_TYPE)* root, BST_TYPE data);
+bst_node(BST_TYPE)* bst_delete(BST_TYPE)(bst_node(BST_TYPE)* root, BST_TYPE data);
+void bst_free(BST_TYPE)(bst_node(BST_TYPE)* root);
+
+#ifdef BST_IMPLEMENTATION
 typedef struct bst_node(BST_TYPE) {
   struct bst_node(BST_TYPE)* left;
   struct bst_node(BST_TYPE)* right;
@@ -144,5 +151,5 @@ void bst_free(BST_TYPE)(bst_node(BST_TYPE)* root) {
     bst_free(root->right);
   free(root);
 }
-
+#endif
 #endif
