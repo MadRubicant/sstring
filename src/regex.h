@@ -5,9 +5,9 @@
 #include <stdlib.h>
 
 
-typedef struct sstring_regex {
-  const char* pattern;
-} sstring_regex;
+typedef struct sstring_regex sstring_regex;
+
+sstring_regex* regex_compile(const char* pattern);
 
 
 #endif
