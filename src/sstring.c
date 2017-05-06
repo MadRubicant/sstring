@@ -2,189 +2,218 @@
 #include "sstring.h"
 #include "stretchy_buffer.h"
 
-static const char* sstring_alloc(const char* string, uint32_t len, uint32_t bufsize) {
-  // Alloc 4 bytes more than we need
-  void* buf = malloc(bufsize + 1 + sizeof(int32_t));
-  // If we're in an OOM condition, assert false
-  if (buf == NULL)
-    assert(0);
-  if (len > bufsize)
-    assert(0);
+#define strmalloc malloc
+
+static sstring* sstring_alloc(size_t size) {
+  assert(size >= 0);
+  sstring* ret = strmalloc(sizeof(sstring));
+  if (!ret)
+    return NULL;
   
-  // We're storing the size of the string in the 4 bytes before it
-  int* size_loc = buf;
-  char* str_loc = buf;
-  str_loc += sizeof(uint32_t);
+  ret->len = size;
+  ret->cstr = strmalloc(size + 1); // Allocate one byte for trailing \0
+  if (!ret->cstr) {
+    free(ret);
+    return NULL;
+  }
+  ret->cstr[size] = '\0';
+  return ret;
+}
+
+sstring* sstring_create(const char* src) {
+  size_t len = strlen(src);
+  sstring* sstr = sstring_alloc(len);
+  if (!sstr)
+    return NULL;
+  sstr->cstr[len] = '\0';
+  for (size_t i = 0; i < len; i++) {
+    sstr->cstr[i] = src[i];
+  }
+  return sstr;
+}
+
+void sstring_destroy(sstring* str) {
+  free(str->cstr);
+  free(str);
+}
+
+int sstring_cat(sstring* src, const char* cat) {
+  if (!cat || !src)
+    return SSTRING_NULLARG;
+  size_t cat_size = src->len + strlen(cat) + 1;
+  sstring* ret = sstring_alloc(cat_size);
+
+  if (!ret)
+    return SSTRING_BADALLOC;
+
+  ret->cstr[cat_size] = '\0';
+  for (size_t i = 0; i < src->len; i++)
+    ret->cstr[i] = src->cstr[i];
+  for (size_t i = src->len; i < cat_size; i++)
+    ret->cstr[i] = src->cstr[i];
   
-  *size_loc = bufsize;
-  strncpy(str_loc, string, len);
-  str_loc[len] = '\0';
-  return str_loc;
-}
-
-const char* sstring_create(const char* bytestring) {
-  if (bytestring) {
-    return sstring_alloc(bytestring, strlen(bytestring), strlen(bytestring));;
-  }
-  return NULL;
-}
-
-const char* sstring_cpy(const char* sstring) {
-  return sstring_alloc(sstring, sstring_len(sstring), sstring_len(sstring));
-}
-
-
-void sstring_free(const char* sstring) {
-  if (sstring) {
-    char* base_addr = (char*)sstring - sizeof(uint32_t);
-    free(base_addr);
-  }
-}
-
-uint32_t sstring_len(const char* sstring) {
-  if (!sstring)
-    return -1;
-  return *((uint32_t*)(sstring - sizeof(uint32_t)));
-}
-
-const char* sstring_substr(const char* sstring, uint32_t start, uint32_t end) {
-  int len = sstring_len(sstring);
-  end = min(end, len);
-  
-  const char* start_loc = sstring + start;
-  uint32_t sublen = end - start;
-  const char* substring = sstring_alloc(start_loc, sublen, sublen);
-  return substring;
-}
-
-int sstring_cmp(const char* a, const char* b) {
-  uint32_t lena = sstring_len(a);
-  uint32_t lenb = sstring_len(b);
-
-  for (int i = 0; i < min(lena, lenb); i++){
-    int diff = a[i] - b[i];
-    if (diff)
-      return diff;
-  }
+  sstring_destroy(src);
+  *src = *ret;
   return 0;
 }
 
-// Compares to sstrings for equality
-int sstring_eq(const char* a, const char* b) {
-  if (!a || !b)
+int sstring_append(sstring* src, sstring* append) {
+  if (!src || !append)
+    return SSTRING_NULLARG;
+
+  size_t final_size = src->len + append->len + 1;
+  sstring* ret = sstring_alloc(final_size);
+
+  if (!ret)
+    return SSTRING_BADALLOC;
+
+  strcpy(ret->cstr, src->cstr);
+  strcpy(ret->cstr + src->len, append->cstr);
+  sstring_destroy(src);
+  *src = *ret;
+  return 0;
+}
+
+int sstring_insert(sstring* src, sstring* insert, size_t pos) {
+  if (!src || !insert)
+    return SSTRING_NULLARG;
+
+  size_t final_size = src->len + insert->len + 1;
+  if (pos > final_size)
+    return SSTRING_BOUNDSERROR;
+  
+  sstring* ret = sstring_alloc(final_size);
+
+  if (!ret)
+    return SSTRING_BADALLOC;
+
+  ret->cstr[final_size] = '\0';
+
+  for (size_t i = 0; i < pos; i++)
+    ret->cstr[i] = src->cstr[i];
+  for (size_t i = 0; i < insert->len; i++)
+    ret->cstr[pos + i] = insert->cstr[i];
+  for (size_t i = pos; i < src->len; i++)
+    ret->cstr[pos + insert->len + i] = src->cstr[i];
+  
+  sstring_destroy(src);
+  *src = *ret;
+  return 0;
+}
+
+
+int sstring_equal(sstring* first, sstring* second) {
+  if (!first || !second)
     return 0;
-  uint32_t lena = sstring_len(a);
-  uint32_t lenb = sstring_len(b);
-  for (int i = 0; i < min(lena, lenb); i++) {
-    int diff = a[i] - b[i];
-    if (diff)
+  if (first->len != second->len)
+    return 0;
+  for (size_t i = 0; i < first->len; i++) {
+    if (first->cstr[i] != second->cstr[i])
       return 0;
   }
   return 1;
 }
 
-const char* sstring_append(const char* left, const char* right) {
-  uint32_t lena = sstring_len(left);
-  uint32_t lenb = sstring_len(right);
+// Negative if left < right, zero if eql, positive if left > right
+int sstring_cmp(sstring* left, sstring* right) {
+  if (!left)
+    return -1;
+  if (!right)
+    return 1;
+  if (!left || !right)
+    return 0;
   
-  char* final = (char*)sstring_alloc(left, lena, lena + lenb);
-  for (int i = 0; i < lenb; i++) {
-    int strpos = i + lena;
-    final[strpos] = right[i];
+  for (size_t i = 0; i < left->len && i < right->len; i++) {
+    if (left->cstr[i] == right->cstr[i])
+      continue;
+    else
+      return left->cstr[i] - right->cstr[i];
   }
-  final[lena + lenb] = '\0';
-  return final;
+  
+  if (left->len != right->len)
+    return left->len - right->len;
+  return 0;
 }
 
-const char* sstring_cat(const char* orig, const char* strlit) {
-  uint32_t lenorig = sstring_len(orig);
-  int lenlit = strlen(strlit);
+sstring* sstring_copy(sstring* src) {
+  if (!src)
+    return NULL;
+  
+  sstring* ret = sstring_alloc(src->len);
+  if (!ret)
+    return NULL;
+  
+  for (size_t i = 0; i < src->len; i++)
+    ret->cstr[i] = src->cstr[i];
 
-  char* final = (char*)sstring_alloc(orig, lenorig, lenorig + lenlit);
-  for (int i = 0; i < lenlit; i++) {
-    final[i + lenorig] = strlit[i];
-  }
-
-  return final;
+  return ret;
 }
 
-const char** sstring_split(const char* sstring, char splitchr, int* numsplit) {
-  uint32_t start = 0;
-  uint32_t len = sstring_len(sstring);
-  const char** split_arr = NULL;
+sstring* sstring_substr(sstring* src, size_t start, size_t stop) {
+  if (!src)
+    return NULL;
+  if (start > stop || start == stop)
+    return NULL;
+
+  sstring* ret = sstring_alloc(stop - start);
+  if (!ret)
+    return NULL;
   
-  for (int i = 0; i < len; i++) {
-    if (sstring[i] == splitchr) {
-      sb_push(split_arr, sstring_substr(sstring, start, i));
-      i++;
-      start = i;
+  for (size_t i = 0; i < stop - start; i++)
+    ret->cstr[i] = src->cstr[start + i];
+
+  return ret;
+}
+
+sstring** sstring_split(sstring* src, char splitchr, int* count) {
+  if (!src)
+    return NULL;
+  
+  // Scan the array for occurances of splitchr
+  int numsplit = 0;
+  for (size_t i = 0; i < src->len; i++)
+    if (src->cstr[i] == splitchr)
+      numsplit++;
+
+  sstring** splitarr = strmalloc(sizeof(sstring**) * (numsplit + 1));
+  if (!splitarr)
+    return NULL;
+  
+  splitarr[numsplit] = NULL;
+
+  size_t start_pos = 0;
+  int cursplit = 0;
+  for (size_t i = 0; i < src->len; i++) {
+    if (src->cstr[i] == splitchr) {
+      // If start_pos == i, that means one of
+      // A. It's the first character
+      // B. We split on the last character
+      // C. The last character satisfied one of A, B, or C
+      // In any of these cases, skip this character, move to the next,
+      // and decrement the number of splits we have
+      if (start_pos == i) {
+	start_pos++;
+	numsplit--;
+	splitarr[numsplit] = NULL;
+	continue;
+      }
+      
+      sstring* sub = sstring_substr(src, start_pos, i);
+      if (!sub)
+	goto cleanup;
+      splitarr[cursplit] = sub;
+      cursplit++;
+      start_pos = i + 1;
     }
   }
-  sb_push(split_arr, sstring_substr(sstring, start, len));
-  *numsplit = sb_count(split_arr);
   
-  const char** ret_arr = malloc(*numsplit * sizeof(char*));
-  for (int i = 0; i < *numsplit; i++) {
-    ret_arr[i] = split_arr[i];
-  }
-  sb_free(split_arr);
+  *count = numsplit;
+  return splitarr;
   
-  return ret_arr;
+ cleanup:
+  for (int i = 0; i < cursplit; i++)
+    sstring_destroy(splitarr[i]);
+  free(splitarr);
+  *count = -1;
+  return NULL;
 }
-
-const char* sstring_insert(const char* sstring, int pos, const char* insert) {
-  uint32_t lena = sstring_len(sstring);
-  uint32_t lenb = sstring_len(insert);
-  if (pos < lena)
-    return NULL;
-  
-  char* ret = (char*)sstring_alloc("", 0, lena + lenb);
-  for (uint32_t i = 0; i < pos; i++) {
-    ret[i] = sstring[i];
-  }
-  for (uint32_t i = 0; i < lenb; i++) {
-    ret[pos + i] = insert[i];
-  }
-  for (uint32_t i = pos; i < lena; i++) {
-    ret[pos + lenb + i] = sstring[i];
-  }
-  return ret;  
-}
-
-const char* sstring_litinsert(const char* sstring, int pos, const char* insert) {
-  uint32_t lenorig = sstring_len(sstring);
-  int litlen = strlen(insert);
-  if (pos < lenorig)
-    return NULL;
-  char* final = (char*)sstring_alloc("", 0, lenorig + litlen);
-  uint32_t i = 0;
-  for (i = 0; i < pos; i ++) {
-    final[i] = sstring[i];
-  }
-  for (i = 0; i < litlen; i++) {
-    final[pos + i] = insert[i];
-  }
-  for (i = pos; i < lenorig; i++) {
-    final[pos + litlen + i] = sstring[i];
-  }
-  return final;
-}
-
-
-#ifdef SSTRING_DESTRUCTIVE
-inline const char* sstring_d_append(const char* original, const char* append) {
-  const char* ret = sstring_cat(original, append)
-  if (!ret)
-    abort();
-  sstring_free(original);
-  return ret;
-}
-
-inline const char* sstring_d_insert(const char* original, const char* insert) {
-  const char* ret = sstring_cat(original, append);
-  if (!ret)
-    abort()
-  sstring_free(original);
-  return ret;
-}
-#endif
