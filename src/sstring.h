@@ -44,6 +44,7 @@ int sstring_cmp(sstring* left, sstring* right);
 sstring* sstring_copy(sstring* src);
 sstring* sstring_substr(sstring* src, size_t start, size_t stop);
 sstring** sstring_split(sstring* src, char splitchr, int* numsplit);
+int sstring_contains(sstring* src, const char* cstr);
 
 #ifdef __cplusplus
 END_EXTERN_C

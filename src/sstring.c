@@ -217,3 +217,28 @@ sstring** sstring_split(sstring* src, char splitchr, int* count) {
   *count = -1;
   return NULL;
 }
+
+int sstring_contains(sstring* src, const char* cstr) {
+  if (!src || !cstr)
+    return 0;
+  
+  size_t len = strlen(cstr);
+  if (len < src->len)
+    return 0;
+
+  for (size_t i = 0; i < src->len; i++) {
+    if(i + len > src->len)
+      return 0;
+    
+    int found = 1;
+    for (size_t j = 0; j < len; j++) {
+      if (src->cstr[i + j] != cstr[j]) {
+	found = 0;
+	break;
+      }
+      if (found)
+	return 1;
+    }
+  }
+  return 0;
+}
