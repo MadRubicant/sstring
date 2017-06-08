@@ -12,8 +12,6 @@
 #ifdef __cplusplus
 EXTERN_C
 #endif
-#define max(a, b) (a > b ? a : b)
-#define min(a, b) (a < b ? a : b)
 
 // Error codes
 #define SSTRING_SUCCESS 0

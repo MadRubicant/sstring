@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "sstring.h"
-#include "stretchy_buffer.h"
+
 
 #define strmalloc malloc
 
-static sstring* sstring_alloc(size_t size) {
+sstring* sstring_alloc(size_t size) {
   assert(size >= 0);
   sstring* ret = strmalloc(sizeof(sstring));
   if (!ret)
